@@ -5,58 +5,57 @@ const twitterBtn = document.getElementById('twitter');
 const newQuoteBtn = document.getElementById('new-quote');
 const loader = document.getElementById('loader')
 
-let apiQuotes = []
-// Show new quote
 
 // Show loading
-function loading() {
+function showLoadingSpinner() {
     loader.hidden = false
     quoteContainer.hidden = true
 }
 
-function complete() {
-    loader.hidden = true
-    quoteContainer.hidden = false
+function removeLoadingSpinner() {
+    if (!loader.hidden) {
+        loader.hidden = true
+        quoteContainer.hidden = false
+    }
+
 }
 
-function newQuote() {
-    loading();
-    // Pick a random quote from apiQuotes array
-    const quote = apiQuotes[Math.floor(Math.random() * apiQuotes.length)]
-    // check if author field is blank replace with unknown
-    if (!quote.author) {
+
+
+// Get quote from api
+
+async function getQuote() {
+    showLoadingSpinner()
+    const proxyUrl = 'http://cors-anywhere.herokuapp.com/'
+    const apiUrl = "https://api.forismatic.com/api/1.0/?method=getQuote&format=json&lang=en";
+    try {
+        const response = await fetch(proxyUrl + apiUrl);
+        console.log(response)
+        const data = await response.json();
+            // check if author field is blank replace with unknown
+    if (!data.quoteAuthor) {
         authorText.textContent = 'Unknown'
     } else {
-        authorText.textContent = quote.author.split(', type.fit')[0];
+        authorText.textContent = data.quoteAuthor;
     }
 
     // check quote lenght to determine styling
-    if (quote.text.length > 120) {
+    if (data.quoteText.length > 120) {
         quoteText.classList.add('long-quote');
     } else {
         quoteText.classList.remove('long-quote');
     }
     // set quote and hide loader
 
-    quoteText.textContent = quote.text;
-    complete();
-
-}
-
-// Get quotes from api
-
-async function getQuotes() {
-    loading()
-    const apiUrl = "https://type.fit/api/quotes";
-    try {
-        const response = await fetch(apiUrl);
-        apiQuotes = await response.json();
-        newQuote()
-
+    quoteText.textContent = data.quoteText;
+    removeLoadingSpinner();
     } catch (err) {
+        getQuote()
         // Catch error here
-        alert(err);
+        console.log(err);
     }
+
+
 }
 // Tweet quote
 function tweetQuote() {
@@ -66,11 +65,11 @@ function tweetQuote() {
 
 // Event listeners
 
-newQuoteBtn.addEventListener('click', newQuote)
+newQuoteBtn.addEventListener('click', getQuote)
 twitterBtn.addEventListener('click', tweetQuote)
 
 
 
 
 // on load
-getQuotes()
+getQuote()
